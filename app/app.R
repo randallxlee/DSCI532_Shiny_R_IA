@@ -9,7 +9,6 @@ crime_types <- c("All", sort(unique(crime_df$TYPE)))
 
 ui <- page_sidebar(
   title = "Vancouver Neighbourhood Safety",
-  
   sidebar = sidebar(
     selectizeInput(
       "nb",
@@ -25,19 +24,31 @@ ui <- page_sidebar(
     )
   ),
   layout_columns(
+    col_widths = c(6, 6),
+    style = "align-items: start;",
     value_box(
       title = "Total Crimes",
-      textOutput("total_crimes")
+      height = "100px",
+      tags$div(
+        style = "font-size:26px; font-weight:600;",
+        textOutput("total_crimes")
+      )
     ),
     value_box(
       title = "Most Common Crime",
-      textOutput("top_crime")
+      height = "100px",
+      tags$div(
+        style = "font-size:26px; font-weight:600;",
+        textOutput("top_crime")
+      )
     )
   ),
-  plotOutput("crime_barplot"),
-  #plotOutput("crime_nb_plot"),
-  #tableOutput("crime_table")
-)
+  card(
+    card_body(
+      plotOutput("crime_barplot", height = "600px")
+    )
+  )
+) 
 
 server <- function(input, output) {
 
@@ -66,6 +77,10 @@ server <- function(input, output) {
 
     req(input$nb, input$crime_type)
 
+    if (input$crime_type != "All") {
+      return(NULL)
+    }
+
     df <- filtered_data()
 
     if (nrow(df) == 0) {
@@ -77,36 +92,18 @@ server <- function(input, output) {
     counts <- sort(table(df$TYPE), decreasing = TRUE)
     counts <- head(counts, 10)
 
-    par(mar = c(4, 8, 2, 1))
+    par(mar = c(4, 16, 2, 1))
 
     barplot(
-      counts,
+      rev(counts),
       horiz = TRUE,
       col = "#46b45e",
       las = 1,
-      main = "Crime Types",
+      main = "Top 10 Crime Types",
       xlab = "Count"
     )
 
   }, height = 600)
-
-  output$crime_nb_plot <- renderPlot({
-
-    df <- filtered_data()
-
-    counts <- sort(table(df$NEIGHBOURHOOD), decreasing = TRUE)
-    counts <- head(counts, 10)
-
-    barplot(
-      counts,
-      horiz = TRUE,
-      col = "#46b45e",
-      las = 1,
-      main = "Top Neighbourhoods by Crime",
-      xlab = "Count"
-    )
-
-  })
 
   output$total_crimes <- renderText({
     nrow(filtered_data())
